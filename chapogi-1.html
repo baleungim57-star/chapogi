@@ -10,15 +10,15 @@
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 
   html, body {
-    min-height:100%;
+    height:100%;
     background:#0d1210;
     color:#e8ece7;
     font-family:'Rajdhani', sans-serif;
-    overflow-y:auto;
+    overflow:hidden;
   }
 
   #app {
-    min-height:100vh;
+    height:100vh;
     display:flex;
     flex-direction:column;
     position:relative;
@@ -164,34 +164,6 @@
     cursor:pointer;
   }
   select#regionSelect:focus { outline:none; border-color:#ff6b35; }
-
-  .minimap-wrap {
-    background:#121714;
-    border:1px solid #232b26;
-    border-radius:14px;
-    padding:16px;
-    display:none;
-  }
-  .minimap-wrap .rlabel2 {
-    font-size:11px;
-    color:#5c6b59;
-    letter-spacing:1.5px;
-    text-transform:uppercase;
-    margin-bottom:10px;
-    font-weight:600;
-  }
-  .minimap-wrap svg { display:block; margin:0 auto; }
-  .kr-outline { fill:#1a211c; stroke:#2f3a32; stroke-width:1.5; }
-  .kr-marker {
-    fill:#ff6b35;
-    stroke:#0d1210;
-    stroke-width:2;
-  }
-  .kr-marker-unknown {
-    fill:#3a453d;
-    stroke:#0d1210;
-    stroke-width:2;
-  }
   .chip {
     flex:1;
     padding:12px 0;
@@ -280,7 +252,7 @@
 
   /* FINDING MODE */
   #findScreen {
-    position:fixed;
+    position:absolute;
     inset:0;
     background:#0d1210;
     display:none;
@@ -358,6 +330,70 @@
     0%,100% { opacity:1; }
     50% { opacity:0.55; }
   }
+
+  .log-panel {
+    width:100%;
+    max-width:340px;
+    max-height:170px;
+    overflow-y:auto;
+    margin-top:26px;
+    background:#121714;
+    border:1px solid #232b26;
+    border-radius:12px;
+    padding:10px 12px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11.5px;
+    line-height:1.6;
+    color:#9caa98;
+  }
+  .log-panel .log-line { white-space:nowrap; }
+  .log-panel .log-line:first-child { color:#ff6b35; }
+  .log-panel::-webkit-scrollbar { width:4px; }
+  .log-panel::-webkit-scrollbar-thumb { background:#2a332c; border-radius:2px; }
+
+  .hist-card {
+    background:#121714;
+    border:1px solid #232b26;
+    border-radius:12px;
+    padding:14px 16px;
+    margin-bottom:10px;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+  .hist-card .htitle {
+    font-size:14.5px;
+    font-weight:600;
+    color:#dfe6db;
+  }
+  .hist-card .hsub {
+    font-family:'JetBrains Mono', monospace;
+    font-size:11.5px;
+    color:#7c8a7a;
+  }
+  .hist-card .hbtns {
+    display:flex;
+    gap:8px;
+    margin-top:6px;
+  }
+  .hist-card button {
+    flex:1;
+    padding:9px 0;
+    border:1px solid #2a332c;
+    border-radius:8px;
+    background:transparent;
+    color:#9caa98;
+    font-family:'Rajdhani', sans-serif;
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+  }
+  .hist-empty {
+    text-align:center;
+    color:#5c6b59;
+    font-size:13px;
+    padding:20px 0;
+  }
 </style>
 </head>
 <body>
@@ -394,7 +430,7 @@
       <div class="region-wrap" id="regionWrap">
         <div class="rlabel2">지역 선택</div>
         <select id="regionSelect">
-          <option value="all">전체</option>
+          <option value="all">남한 전체</option>
           <option value="gg">경기도</option>
           <option value="gw">강원도</option>
           <option value="cb">충청북도</option>
@@ -416,31 +452,21 @@
 
       <div class="readout" id="targetReadout" style="display:none;">
         <div class="rlabel">타겟 스팟</div>
-        <div class="rval" id="targetVal">생성됨</div>
-      </div>
-
-      <div class="toggle-row" id="revealWrap">
-        <div>
-          <div class="tlabel">타겟 좌표 공개</div>
-          <div class="tsub">끄면 좌표를 숨기고 거리만 표시</div>
-        </div>
-        <div class="switch on" id="revealToggle"><div class="knob"></div></div>
+        <div class="rval" id="targetVal">생성됨 · 좌표 비공개</div>
       </div>
 
       <button class="primary" id="btnSpot" style="display:none;">타겟 스팟 생성</button>
-
-      <div class="minimap-wrap" id="minimapWrap">
-        <div class="rlabel2">타겟 위치</div>
-        <svg id="krSvg" viewBox="0 0 260 380" width="220" height="322">
-          <polygon class="kr-outline" id="krPolygon" points=""></polygon>
-          <circle class="kr-outline" id="jejuCircle" cx="0" cy="0" r="10"></circle>
-          <circle id="targetMarker" cx="-100" cy="-100" r="6" class="kr-marker"></circle>
-        </svg>
-      </div>
       <button class="primary" id="btnFind" style="display:none;">찾기 모드 시작</button>
       <button class="ghost" id="btnReset" style="display:none;">처음부터 다시</button>
+      <button class="ghost" id="btnHistory">지난 기록 보기</button>
 
       <div class="status" id="statusMsg"></div>
+    </div>
+
+    <div class="panel" id="historyPanel" style="display:none;">
+      <div class="section-label">지난 찾기 기록</div>
+      <div id="historyList"></div>
+      <button class="ghost" id="btnHistoryBack">돌아가기</button>
     </div>
   </main>
 
@@ -457,6 +483,7 @@
       </div>
     </div>
     <button class="find-exit" id="btnExitFind">찾기 모드 종료</button>
+    <div class="log-panel" id="logPanel"></div>
   </div>
 
 </div>
@@ -465,7 +492,6 @@
   const R_EARTH = 6371; // km
   let radiusKm = 10;
   let useGps = false;
-  let revealCoords = true;
   let startCoord = null;   // {lat, lng}
   let targetCoord = null;  // {lat, lng}
   let watchId = null;
@@ -490,60 +516,6 @@
     const lat = b.latMin + Math.random() * (b.latMax - b.latMin);
     const lng = b.lngMin + Math.random() * (b.lngMax - b.lngMin);
     return { lat, lng };
-  }
-
-  // ---- 미니맵 (대략적인 남한 윤곽) ----
-  const MAP_BOUNDS = { latMin: 33.0, latMax: 38.4, lngMin: 125.9, lngMax: 129.6 };
-  const MAP_W = 260, MAP_H = 380, MAP_PAD = 22;
-
-  const KR_OUTLINE_LATLNG = [
-    [37.75,126.35],[37.45,126.60],[36.95,126.20],[36.60,126.45],
-    [35.97,126.66],[35.35,126.40],[34.95,126.40],[34.55,126.55],
-    [34.35,126.60],[34.45,127.15],[34.60,127.50],[34.76,127.66],
-    [34.85,128.10],[35.00,128.60],[35.10,129.04],[35.55,129.35],
-    [36.00,129.36],[36.55,129.45],[37.20,129.20],[37.75,128.90],
-    [38.20,128.55],[38.30,128.35],[38.15,127.50],[37.95,126.90]
-  ];
-  const JEJU_LATLNG = [33.38, 126.55];
-
-  function project(lat, lng) {
-    const x = MAP_PAD + ((lng - MAP_BOUNDS.lngMin) / (MAP_BOUNDS.lngMax - MAP_BOUNDS.lngMin)) * (MAP_W - MAP_PAD*2);
-    const y = MAP_PAD + ((MAP_BOUNDS.latMax - lat) / (MAP_BOUNDS.latMax - MAP_BOUNDS.latMin)) * (MAP_H - MAP_PAD*2);
-    return { x, y };
-  }
-
-  const krPolygon = document.getElementById('krPolygon');
-  const jejuCircle = document.getElementById('jejuCircle');
-  const targetMarker = document.getElementById('targetMarker');
-  const minimapWrap = document.getElementById('minimapWrap');
-
-  (function drawOutline() {
-    const pts = KR_OUTLINE_LATLNG.map(([la,ln]) => {
-      const p = project(la, ln);
-      return p.x.toFixed(1) + ',' + p.y.toFixed(1);
-    }).join(' ');
-    krPolygon.setAttribute('points', pts);
-    const jp = project(JEJU_LATLNG[0], JEJU_LATLNG[1]);
-    jejuCircle.setAttribute('cx', jp.x.toFixed(1));
-    jejuCircle.setAttribute('cy', jp.y.toFixed(1));
-  })();
-
-  function renderMinimap() {
-    if (!targetCoord) { minimapWrap.style.display = 'none'; return; }
-    minimapWrap.style.display = 'block';
-    if (revealCoords) {
-      const p = project(
-        Math.min(Math.max(targetCoord.lat, MAP_BOUNDS.latMin - 0.6), MAP_BOUNDS.latMax + 0.3),
-        Math.min(Math.max(targetCoord.lng, MAP_BOUNDS.lngMin - 0.6), MAP_BOUNDS.lngMax + 0.3)
-      );
-      targetMarker.setAttribute('cx', p.x.toFixed(1));
-      targetMarker.setAttribute('cy', p.y.toFixed(1));
-      targetMarker.setAttribute('class', 'kr-marker');
-      targetMarker.setAttribute('r', 6);
-    } else {
-      targetMarker.setAttribute('cx', -100);
-      targetMarker.setAttribute('cy', -100);
-    }
   }
 
   const statusMsg = document.getElementById('statusMsg');
@@ -622,29 +594,6 @@
     btnStart.textContent = useGps ? '1번 스팟 다시 찍기' : '1번 스팟 다시 찍기';
   }
 
-  function getStartFromGps(highAcc) {
-    navigator.geolocation.getCurrentPosition(
-      pos => {
-        confirmStart({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        setStatus('현재 위치로 1번 스팟이 설정됐어요', 'ok');
-      },
-      err => {
-        if (highAcc && err.code === err.TIMEOUT) {
-          getStartFromGps(false);
-          return;
-        }
-        if (err.code === err.PERMISSION_DENIED) {
-          setStatus('위치 권한이 거부됐어요. 브라우저 설정을 확인해주세요', 'err');
-        } else if (err.code === err.POSITION_UNAVAILABLE) {
-          setStatus('GPS 신호 없음 · 실외로 이동해보세요', 'err');
-        } else {
-          setStatus('위치 확인이 지연되고 있어요. 다시 시도해주세요', 'err');
-        }
-      },
-      { enableHighAccuracy: highAcc, timeout: highAcc ? 8000 : 20000, maximumAge: 2000 }
-    );
-  }
-
   btnStart.addEventListener('click', () => {
     if (useGps) {
       if (!navigator.geolocation) {
@@ -652,36 +601,27 @@
         return;
       }
       setStatus('위치 확인 중...');
-      getStartFromGps(true);
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          confirmStart({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+          setStatus('현재 위치로 1번 스팟이 설정됐어요', 'ok');
+        },
+        err => {
+          setStatus('위치 접근이 거부됐어요. 브라우저 설정을 확인해주세요', 'err');
+        },
+        { enableHighAccuracy:true, timeout:10000 }
+      );
     } else {
       confirmStart(randomKoreaPoint());
-      setStatus('선택한 지역 내 랜덤 지점으로 1번 스팟이 설정됐어요', 'ok');
+      setStatus('대한민국 내 랜덤 지점으로 1번 스팟이 설정됐어요', 'ok');
     }
-  });
-
-  const revealToggle = document.getElementById('revealToggle');
-  const targetValEl = document.getElementById('targetVal');
-
-  function renderTargetVal() {
-    if (!targetCoord) return;
-    targetValEl.textContent = revealCoords
-      ? fmtCoord(targetCoord)
-      : '생성됨 · 좌표 비공개 (반경 ' + radiusKm + 'km)';
-  }
-
-  revealToggle.addEventListener('click', () => {
-    revealCoords = !revealCoords;
-    revealToggle.classList.toggle('on', revealCoords);
-    renderTargetVal();
-    renderMinimap();
   });
 
   btnSpot.addEventListener('click', () => {
     if (!startCoord) return;
     targetCoord = randomPointWithin(startCoord, radiusKm);
     targetReadout.style.display = 'block';
-    renderTargetVal();
-    renderMinimap();
+    document.getElementById('targetVal').textContent = '생성됨 · 좌표 비공개 (반경 ' + radiusKm + 'km)';
     btnFind.style.display = 'block';
     btnReset.style.display = 'block';
     btnSpot.textContent = '타겟 스팟 다시 생성';
@@ -694,7 +634,6 @@
     startVal.textContent = '미확정';
     startVal.classList.add('dim');
     targetReadout.style.display = 'none';
-    minimapWrap.style.display = 'none';
     btnSpot.style.display = 'none';
     btnFind.style.display = 'none';
     btnReset.style.display = 'none';
@@ -703,48 +642,107 @@
     setStatus('');
   });
 
+  let lastKnownPos = null;   // {lat, lng}
+  let logInterval = null;
+  const logPanel = document.getElementById('logPanel');
+  const MAX_LOG_LINES = 60;
+  const STORAGE_KEY = 'chapogi_sessions_v1';
+  const MAX_SESSIONS = 30;
+  let currentSession = null; // {id, startedAt, radiusKm, startCoord, targetCoord, entries:[], arrived}
+
+  function loadSessions() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveSessions(sessions) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
+    } catch (e) {
+      // 저장 실패 (용량 초과 등) 시 조용히 무시
+    }
+  }
+
+  function persistSession(session) {
+    const sessions = loadSessions();
+    sessions.unshift(session);
+    while (sessions.length > MAX_SESSIONS) sessions.pop();
+    saveSessions(sessions);
+  }
+
+  function sessionToCsv(session) {
+    const rows = [['time', 'lat', 'lng', 'distance_km']];
+    session.entries.forEach(e => {
+      rows.push([e.t, e.lat ?? '', e.lng ?? '', e.dist ?? '']);
+    });
+    return rows.map(r => r.join(',')).join('\n');
+  }
+
+  function downloadCsv(session) {
+    const csv = sessionToCsv(session);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const dateStr = new Date(session.startedAt).toISOString().slice(0,19).replace(/[:T]/g,'-');
+    a.href = url;
+    a.download = `chapogi-log-${dateStr}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
   btnFind.addEventListener('click', () => {
     if (!targetCoord) return;
+    logPanel.innerHTML = '';
+    currentSession = {
+      id: Date.now(),
+      startedAt: new Date().toISOString(),
+      radiusKm: radiusKm,
+      startCoord: startCoord,
+      targetCoord: targetCoord,
+      entries: [],
+      arrived: false
+    };
     findScreen.classList.add('show');
     startWatch();
+    startLogging();
   });
 
   document.getElementById('btnExitFind').addEventListener('click', () => {
     stopWatch();
+    stopLogging();
     findScreen.classList.remove('show');
+    finishSession();
   });
 
-  function startWatch() {
-    if (!navigator.geolocation) {
-      findLabel.textContent = '위치 기능 미지원';
-      return;
+  function finishSession() {
+    if (!currentSession) return;
+    currentSession.endedAt = new Date().toISOString();
+    if (currentSession.entries.length > 0) {
+      persistSession(currentSession);
+      downloadCsv(currentSession);
+      setStatus('기록이 저장되고 CSV로 다운로드됐어요', 'ok');
     }
-    doWatch(true);
+    currentSession = null;
   }
 
-  function doWatch(highAcc) {
-    if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+  function startWatch() {
+    if (!navigator.geolocation) return;
     watchId = navigator.geolocation.watchPosition(
       pos => {
         const here = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        lastKnownPos = here;
         const dKm = haversine(here, targetCoord);
         updateFindUI(dKm);
       },
       err => {
-        if (highAcc && err.code === err.TIMEOUT) {
-          // 정밀 GPS가 안 잡히면 저정밀 모드로 재시도
-          doWatch(false);
-          return;
-        }
-        if (err.code === err.PERMISSION_DENIED) {
-          findLabel.textContent = '위치 권한이 거부됐어요';
-        } else if (err.code === err.POSITION_UNAVAILABLE) {
-          findLabel.textContent = 'GPS 신호 없음 · 실외로 이동해보세요';
-        } else {
-          findLabel.textContent = 'GPS 신호 대기 중...';
-        }
+        findLabel.textContent = 'GPS 신호 없음';
       },
-      { enableHighAccuracy: highAcc, maximumAge: 2000, timeout: highAcc ? 8000 : 20000 }
+      { enableHighAccuracy:true, maximumAge:1000, timeout:15000 }
     );
   }
 
@@ -754,6 +752,94 @@
       watchId = null;
     }
   }
+
+  function startLogging() {
+    stopLogging(); // 안전하게 기존 인터벌 정리
+    logInterval = setInterval(() => {
+      const now = new Date();
+      const ts = now.toTimeString().slice(0, 8); // HH:MM:SS
+
+      let line;
+      let entry = { t: ts };
+      if (!lastKnownPos) {
+        line = `[${ts}] GPS 신호 대기 중...`;
+      } else {
+        const dKm = haversine(lastKnownPos, targetCoord);
+        const arrived = dKm < 0.05;
+        const distStr = arrived ? '도착' : dKm.toFixed(3) + 'km';
+        line = `[${ts}] ${lastKnownPos.lat.toFixed(5)}, ${lastKnownPos.lng.toFixed(5)} · 남은거리 ${distStr}`;
+        entry.lat = lastKnownPos.lat.toFixed(6);
+        entry.lng = lastKnownPos.lng.toFixed(6);
+        entry.dist = dKm.toFixed(3);
+        if (arrived && currentSession) currentSession.arrived = true;
+      }
+
+      if (currentSession) currentSession.entries.push(entry);
+
+      const div = document.createElement('div');
+      div.className = 'log-line';
+      div.textContent = line;
+      logPanel.prepend(div);
+
+      while (logPanel.children.length > MAX_LOG_LINES) {
+        logPanel.removeChild(logPanel.lastChild);
+      }
+    }, 1000);
+  }
+
+  function stopLogging() {
+    if (logInterval !== null) {
+      clearInterval(logInterval);
+      logInterval = null;
+    }
+  }
+
+  const setupPanel = document.getElementById('setupPanel');
+  const historyPanel = document.getElementById('historyPanel');
+  const historyList = document.getElementById('historyList');
+  const btnHistory = document.getElementById('btnHistory');
+  const btnHistoryBack = document.getElementById('btnHistoryBack');
+
+  function fmtDate(iso) {
+    const d = new Date(iso);
+    return d.getFullYear() + '.' + String(d.getMonth()+1).padStart(2,'0') + '.' + String(d.getDate()).padStart(2,'0') +
+      ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  }
+
+  function renderHistory() {
+    const sessions = loadSessions();
+    historyList.innerHTML = '';
+    if (sessions.length === 0) {
+      historyList.innerHTML = '<div class="hist-empty">아직 기록이 없어요</div>';
+      return;
+    }
+    sessions.forEach(s => {
+      const card = document.createElement('div');
+      card.className = 'hist-card';
+      const durSec = s.entries.length;
+      const lastDist = s.entries.length ? s.entries[s.entries.length-1].dist : '-';
+      card.innerHTML = `
+        <div class="htitle">${fmtDate(s.startedAt)} · 반경 ${s.radiusKm}km ${s.arrived ? '· 🏁도착' : ''}</div>
+        <div class="hsub">기록 ${durSec}개 · 마지막 남은거리 ${lastDist}km</div>
+        <div class="hbtns">
+          <button class="dl-btn">CSV 다운로드</button>
+        </div>
+      `;
+      card.querySelector('.dl-btn').addEventListener('click', () => downloadCsv(s));
+      historyList.appendChild(card);
+    });
+  }
+
+  btnHistory.addEventListener('click', () => {
+    setupPanel.style.display = 'none';
+    historyPanel.style.display = 'flex';
+    renderHistory();
+  });
+
+  btnHistoryBack.addEventListener('click', () => {
+    historyPanel.style.display = 'none';
+    setupPanel.style.display = 'flex';
+  });
 
   function updateFindUI(dKm) {
     const arrived = dKm < 0.05; // 50m
