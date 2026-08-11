@@ -10,17 +10,13 @@
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 
   html, body {
-    height:100%;
     background:#0d1210;
     color:#e8ece7;
     font-family:'Rajdhani', sans-serif;
-    overflow:hidden;
   }
 
   #app {
-    height:100vh;
-    display:flex;
-    flex-direction:column;
+    min-height:100vh;
     position:relative;
   }
 
@@ -252,15 +248,19 @@
 
   /* FINDING MODE */
   #findScreen {
-    position:absolute;
-    inset:0;
+    position:fixed;
+    top:0; left:0; right:0; bottom:0;
+    height:100dvh;
     background:#0d1210;
     display:none;
     flex-direction:column;
     align-items:center;
-    justify-content:center;
+    justify-content:flex-start;
     z-index:10;
     gap:8px;
+    overflow-y:scroll;
+    -webkit-overflow-scrolling:touch;
+    padding:60px 24px 40px;
   }
   #findScreen.show { display:flex; }
 
